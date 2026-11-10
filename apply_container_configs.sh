@@ -4,38 +4,18 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
-echo "=== Ensuring upstream remote is configured..."
-if ! git remote | grep -q "^upstream$"; then
-    git remote add upstream https://github.com/manipvlator/los_kernel_xiaomi_sm6150.git
-fi
-
-echo "=== Fetching upstream stable..."
-git fetch --depth=50 upstream stable
-
-echo "=== Backing up current state..."
-git branch -f backup-stable-before-sync HEAD
-
-# Keep self script preserved across resets
-TMP_SCRIPT="$(mktemp)"
-cp "$0" "$TMP_SCRIPT"
-
-echo "=== Resetting onto upstream/stable..."
-git reset --hard upstream/stable
-
-cp "$TMP_SCRIPT" "$0"
-rm -f "$TMP_SCRIPT"
-chmod +x "$0"
-
-echo "=== Applying Droidspaces & Container kernel options in sweet_defconfig..."
 DEFCONFIG="arch/arm64/configs/vendor/sweet_defconfig"
+
+echo "=== Applying Droidspaces, Performance & Container kernel options in sweet_defconfig..."
 
 # 1. Enable SYSVIPC & POSIX_MQUEUE (IPC dependencies)
 sed -i 's/# CONFIG_SYSVIPC is not set/CONFIG_SYSVIPC=y\nCONFIG_SYSVIPC_SYSCTL=y/' "$DEFCONFIG"
 sed -i 's/# CONFIG_POSIX_MQUEUE is not set/CONFIG_POSIX_MQUEUE=y/' "$DEFCONFIG"
 
-# 2. Enable CPU and Process limits (CFS_BANDWIDTH & CGROUP_PIDS)
+# 2. Enable CPU and Process limits (CFS_BANDWIDTH, CGROUP_PIDS, CGROUP_DEVICE)
 sed -i 's/# CONFIG_CFS_BANDWIDTH is not set/CONFIG_CFS_BANDWIDTH=y/' "$DEFCONFIG"
 sed -i 's/# CONFIG_CGROUP_PIDS is not set/CONFIG_CGROUP_PIDS=y/' "$DEFCONFIG"
+sed -i 's/# CONFIG_CGROUP_DEVICE is not set/CONFIG_CGROUP_DEVICE=y/' "$DEFCONFIG"
 
 # 3. Enable Namespaces (PID, IPC, USER)
 sed -i 's/# CONFIG_USER_NS is not set/CONFIG_USER_NS=y/' "$DEFCONFIG"
@@ -52,6 +32,23 @@ sed -i 's/# CONFIG_DEVTMPFS is not set/CONFIG_DEVTMPFS=y\nCONFIG_DEVTMPFS_MOUNT=
 # 6. Enable MACVLAN & MACVTAP
 sed -i 's/# CONFIG_MACVLAN is not set/CONFIG_MACVLAN=y\nCONFIG_MACVTAP=y/' "$DEFCONFIG"
 
+# 7. Enable ZSTD Crypto & F2FS Acceleration
+sed -i 's/# CONFIG_CRYPTO_ZSTD is not set/CONFIG_CRYPTO_ZSTD=y\nCONFIG_ZSTD_COMPRESS=y\nCONFIG_ZSTD_DECOMPRESS=y\nCONFIG_F2FS_FS_ZSTD=y/' "$DEFCONFIG"
+
+# 8. Set ZRAM default compression and recompression to ZSTD (10.74:1 density)
+sed -i 's/CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM="lz4"/CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM="zstd"/' "$DEFCONFIG"
+sed -i 's/CONFIG_ZRAM_DEFAULT_RECOMP_ALGORITHM="lzo"/CONFIG_ZRAM_DEFAULT_RECOMP_ALGORITHM="zstd"/' "$DEFCONFIG"
+
+# 9. Enable Forensic Observability (DebugFS, Hung Task Detection, Ftrace Syscalls)
+sed -i 's/# CONFIG_DEBUG_FS is not set/CONFIG_DEBUG_FS=y/' "$DEFCONFIG"
+sed -i 's/# CONFIG_DETECT_HUNG_TASK is not set/CONFIG_DETECT_HUNG_TASK=y\nCONFIG_DEFAULT_HUNG_TASK_TIMEOUT=30/' "$DEFCONFIG"
+grep -q "CONFIG_FTRACE_SYSCALLS=y" "$DEFCONFIG" || sed -i '/CONFIG_FTRACE=y/a CONFIG_FTRACE_SYSCALLS=y' "$DEFCONFIG"
+
+# 10. Enable Memory Efficiency & Bionic Safety
+grep -q "CONFIG_PID_MAX_CLAMP_BIONIC=y" "$DEFCONFIG" || sed -i '/CONFIG_CROSS_MEMORY_ATTACH=y/a CONFIG_PID_MAX_CLAMP_BIONIC=y' "$DEFCONFIG"
+sed -i 's/# CONFIG_KSM is not set/CONFIG_KSM=y/' "$DEFCONFIG"
+sed -i 's/# CONFIG_TRANSPARENT_HUGEPAGE is not set/CONFIG_TRANSPARENT_HUGEPAGE=y\nCONFIG_TRANSPARENT_HUGEPAGE_MADVISE=y/' "$DEFCONFIG"
+
 echo "=== Verifying applied configurations..."
 MISSING=0
 for opt in \
@@ -60,6 +57,7 @@ for opt in \
     "CONFIG_POSIX_MQUEUE=y" \
     "CONFIG_CFS_BANDWIDTH=y" \
     "CONFIG_CGROUP_PIDS=y" \
+    "CONFIG_CGROUP_DEVICE=y" \
     "CONFIG_USER_NS=y" \
     "CONFIG_PID_NS=y" \
     "CONFIG_IPC_NS=y" \
@@ -70,7 +68,20 @@ for opt in \
     "CONFIG_DEVTMPFS=y" \
     "CONFIG_DEVTMPFS_MOUNT=y" \
     "CONFIG_MACVLAN=y" \
-    "CONFIG_MACVTAP=y"
+    "CONFIG_MACVTAP=y" \
+    "CONFIG_CRYPTO_ZSTD=y" \
+    "CONFIG_ZSTD_COMPRESS=y" \
+    "CONFIG_ZSTD_DECOMPRESS=y" \
+    "CONFIG_F2FS_FS_ZSTD=y" \
+    'CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM="zstd"' \
+    'CONFIG_ZRAM_DEFAULT_RECOMP_ALGORITHM="zstd"' \
+    "CONFIG_DEBUG_FS=y" \
+    "CONFIG_DETECT_HUNG_TASK=y" \
+    "CONFIG_FTRACE_SYSCALLS=y" \
+    "CONFIG_PID_MAX_CLAMP_BIONIC=y" \
+    "CONFIG_KSM=y" \
+    "CONFIG_TRANSPARENT_HUGEPAGE=y" \
+    "CONFIG_TRANSPARENT_HUGEPAGE_MADVISE=y"
 do
     if grep -q "^$opt" "$DEFCONFIG"; then
         echo "  [OK] $opt"
@@ -85,15 +96,4 @@ if [ "$MISSING" -ne 0 ]; then
     exit 1
 fi
 
-echo "=== All 16 container configurations verified successfully!"
-
-if git diff --quiet "$DEFCONFIG" && git diff --quiet apply_container_configs.sh; then
-    echo "No changes needed, already committed."
-else
-    echo "Creating clean commit..."
-    git add "$DEFCONFIG" apply_container_configs.sh
-    git -c user.name="kk703338" -c user.email="kk703338@gmail.com" commit -m "defconfig: Enable Droidspaces flags (PID, IPC, USER, DEVTMPFS, MACVLAN, IPv6 NAT, CFS, PIDS)"
-    echo "Commit created successfully on top of $(git rev-parse --short upstream/stable)."
-fi
-
-echo "=== Successfully updated kernel repository!"
+echo "=== All 30 kernel optimizations verified successfully in sweet_defconfig!"

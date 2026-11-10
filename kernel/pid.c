@@ -54,7 +54,12 @@ int pid_max = PID_MAX_DEFAULT;
 #define RESERVED_PIDS		300
 
 int pid_max_min = RESERVED_PIDS + 1;
+#ifdef CONFIG_PID_MAX_CLAMP_BIONIC
+/* Android 32-bit Bionic pthread_mutex_t stores TID in 16 bits (max 65535) */
+int pid_max_max = 65535;
+#else
 int pid_max_max = PID_MAX_LIMIT;
+#endif
 
 
 /*
@@ -554,6 +559,21 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
 	return fd;
 }
 
+/**
+ * pidfd_to_pid() - Retrieve the struct pid from a pidfd file
+ * @file:  the file pointer of the pidfd
+ *
+ * Return: struct pid on success, or -EINVAL on failure.
+ */
+struct pid *pidfd_to_pid(const struct file *file)
+{
+	if (file->f_op == &pidfd_fops)
+		return file->private_data;
+
+	return tgid_pidfd_to_pid(file);
+}
+EXPORT_SYMBOL_GPL(pidfd_to_pid);
+
 /*
  * The pid hash table is scaled according to the amount of memory in the
  * machine.  From a minimum of 16 slots up to 4096 slots at one gigabyte or
@@ -575,6 +595,9 @@ void __init pid_idr_init(void)
 	/* bump default and minimum pid_max based on number of cpus */
 	pid_max = min(pid_max_max, max_t(int, pid_max,
 				PIDS_PER_CPU_DEFAULT * num_possible_cpus()));
+#ifdef CONFIG_PID_MAX_CLAMP_BIONIC
+	pid_max = min_t(int, 65535, pid_max);
+#endif
 	pid_max_min = max_t(int, pid_max_min,
 				PIDS_PER_CPU_MIN * num_possible_cpus());
 	pr_info("pid_max: default: %u minimum: %u\n", pid_max, pid_max_min);

@@ -1908,6 +1908,17 @@ config BASE_SMALL
 	default 0 if BASE_FULL
 	default 1 if !BASE_FULL
 
+config PID_MAX_CLAMP_BIONIC
+	bool "Clamp pid_max to 65535 for Android 32-bit Bionic compatibility"
+	default y
+	help
+	  Android 32-bit Bionic libc pthread_mutex_t stores the owner TID in
+	  16 bits. When any thread's TID exceeds 65535, 32-bit processes
+	  (such as Qualcomm proprietary vendor HALs and crash_dump32) abort.
+	  Enabling this option sets pid_max_max to 65535, preventing rogue
+	  userspace scripts or container runtimes from raising pid_max beyond
+	  the safe boundary.
+
 menuconfig MODULES
 	bool "Enable loadable module support"
 	option modules

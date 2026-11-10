@@ -17,6 +17,10 @@
 #undef ELF_ST_TYPE
 #undef ELF_R_SYM
 #undef ELF_R_TYPE
+#undef ELF64_ST_BIND
+#undef ELF64_ST_TYPE
+#define ELF64_ST_BIND(x) (((unsigned int)(x)) >> 4)
+#define ELF64_ST_TYPE(x) (((unsigned int)(x)) & 0xf)
 
 #if KERNEL_ELFCLASS == ELFCLASS32
 
