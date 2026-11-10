@@ -1,0 +1,122 @@
+{
+  "schedutil": {
+    "config": {
+      "name": "schedutil",
+      "gov": "schedutil",
+      "gaming": 0
+    },
+    "duration_s": 21.814754724502563,
+    "generation_ts": 9.229797,
+    "prompt_eval_ts": 32.470747,
+    "t_before": {
+      "voltage_uV": 3922908.0,
+      "current_uA": 631714.0,
+      "power_mW": 2478.155904312,
+      "batt_temp_C": 34.7,
+      "cpu_temp_C": 44.5,
+      "freq_cpu6_MHz": 1555.2,
+      "freq_cpu0_MHz": 1804.8
+    },
+    "t_after": {
+      "voltage_uV": 3839798.0,
+      "current_uA": 992737.0,
+      "power_mW": 3811.909547126,
+      "batt_temp_C": 35.0,
+      "cpu_temp_C": 64.6,
+      "freq_cpu6_MHz": 1708.8,
+      "freq_cpu0_MHz": 1804.8
+    },
+    "temp_delta": 20.099999999999994,
+    "power_mW": 3811.909547126
+  },
+  "vorpal_daily": {
+    "config": {
+      "name": "vorpal_daily",
+      "gov": "vorpal",
+      "gaming": 0
+    },
+    "duration_s": 22.356406211853027,
+    "generation_ts": 10.175892,
+    "prompt_eval_ts": 29.675308,
+    "t_before": {
+      "voltage_uV": 3952688.0,
+      "current_uA": 402527.0,
+      "power_mW": 1591.063642576,
+      "batt_temp_C": 35.0,
+      "cpu_temp_C": 48.7,
+      "freq_cpu6_MHz": 1939.2,
+      "freq_cpu0_MHz": 1497.6
+    },
+    "t_after": {
+      "voltage_uV": 3905196.0,
+      "current_uA": 617676.0,
+      "power_mW": 2412.145844496,
+      "batt_temp_C": 35.1,
+      "cpu_temp_C": 54.9,
+      "freq_cpu6_MHz": 1939.2,
+      "freq_cpu0_MHz": 1497.6
+    },
+    "temp_delta": 6.199999999999996,
+    "power_mW": 2412.145844496
+  },
+  "vorpal_gaming": {
+    "config": {
+      "name": "vorpal_gaming",
+      "gov": "vorpal",
+      "gaming": 1
+    },
+    "duration_s": 17.90145444869995,
+    "generation_ts": 8.308535,
+    "prompt_eval_ts": 35.050341,
+    "t_before": {
+      "voltage_uV": 3948211.0,
+      "current_uA": 352173.0,
+      "power_mW": 1390.453312503,
+      "batt_temp_C": 35.1,
+      "cpu_temp_C": 47.7,
+      "freq_cpu6_MHz": 1939.2,
+      "freq_cpu0_MHz": 1497.6
+    },
+    "t_after": {
+      "voltage_uV": 3842329.0,
+      "current_uA": 1008301.0,
+      "power_mW": 3874.224173029,
+      "batt_temp_C": 35.5,
+      "cpu_temp_C": 61.7,
+      "freq_cpu6_MHz": 1939.2,
+      "freq_cpu0_MHz": 1497.6
+    },
+    "temp_delta": 14.0,
+    "power_mW": 3874.224173029
+  },
+  "reflex": {
+    "config": {
+      "name": "reflex",
+      "gov": "reflex",
+      "gaming": 0
+    },
+    "duration_s": 21.524628400802612,
+    "generation_ts": 7.53942,
+    "prompt_eval_ts": 32.773588,
+    "t_before": {
+      "voltage_uV": 3911230.0,
+      "current_uA": 768127.0,
+      "power_mW": 3004.32136621,
+      "batt_temp_C": 35.5,
+      "cpu_temp_C": 51.0,
+      "freq_cpu6_MHz": 652.8,
+      "freq_cpu0_MHz": 1804.8
+    },
+    "t_after": {
+      "voltage_uV": 3927385.0,
+      "current_uA": 189819.0,
+      "power_mW": 745.492293315,
+      "batt_temp_C": 35.8,
+      "cpu_temp_C": 60.7,
+      "freq_cpu6_MHz": 2304.0,
+      "freq_cpu0_MHz": 1804.8
+    },
+    "temp_delta": 9.700000000000003,
+    "power_mW": 745.492293315
+  }
+}
