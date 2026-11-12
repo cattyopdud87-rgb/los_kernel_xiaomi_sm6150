@@ -52,6 +52,7 @@
 #elif defined(CONFIG_COMMON_CLK_MSM)
 #include "../../drivers/clk/msm/clock.h"
 #endif /* CONFIG_COMMON_CLK */
+#include "../../kernel/sched/sched.h"
 #define CREATE_TRACE_POINTS
 #include <trace/events/trace_msm_low_power.h>
 
@@ -149,7 +150,7 @@ module_param_named(sleep_disabled, sleep_disabled, bool, 0664);
  */
 s32 msm_cpuidle_get_deep_idle_latency(void)
 {
-	return 10;
+	return 2;
 }
 EXPORT_SYMBOL(msm_cpuidle_get_deep_idle_latency);
 
@@ -707,7 +708,8 @@ static int cpu_power_select(struct cpuidle_device *dev,
 	struct power_params *pwr_params;
 	uint64_t bias_time = 0;
 
-	if ((sleep_disabled && !cpu_isolated(dev->cpu)) || sleep_us < 0)
+	if ((sleep_disabled && !cpu_isolated(dev->cpu)) ||
+	    is_reserved(dev->cpu) || sleep_us < 0)
 		return best_level;
 
 	idx_restrict = cpu->nlevels + 1;
@@ -1461,9 +1463,18 @@ static int lpm_cpuidle_select(struct cpuidle_driver *drv,
 		struct cpuidle_device *dev, bool *stop_tick)
 {
 	struct lpm_cpu *cpu = per_cpu(cpu_lpm, dev->cpu);
+#ifdef CONFIG_NO_HZ_COMMON
+	ktime_t delta_next;
+	s64 duration_ns = tick_nohz_get_sleep_length(&delta_next);
+#endif
 
 	if (!cpu)
 		return 0;
+
+#ifdef CONFIG_NO_HZ_COMMON
+	if (duration_ns <= TICK_NSEC)
+		*stop_tick = false;
+#endif
 
 	return cpu_power_select(dev, cpu);
 }
