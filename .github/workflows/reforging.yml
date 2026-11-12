@@ -63,6 +63,7 @@ jobs:
           export KBUILD_COMPILER_STRING="Neutron clang version 24.0.0"
           export CFLAGS_EXTRA="-DBUILD_DATE=$BUILD_DATE"
 
+          bash apply_container_configs.sh
           make O=out ARCH=arm64 vendor/sweet_defconfig
           make -j"$(nproc --all)" O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 CC=clang \
             CLANG_TRIPLE="$CLANG_PATH/aarch64-linux-gnu-" \

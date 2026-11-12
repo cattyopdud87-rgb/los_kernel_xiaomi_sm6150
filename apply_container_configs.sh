@@ -6,7 +6,21 @@ cd "$REPO_DIR"
 
 DEFCONFIG="arch/arm64/configs/vendor/sweet_defconfig"
 
-echo "=== Applying Droidspaces, Performance & Container kernel options in sweet_defconfig..."
+echo "=== Applying Hardware Platform, Droidspaces, Performance & Container kernel options in sweet_defconfig..."
+
+# Hardware Platform Integrity (Snapdragon 732G SM6150 / sweet)
+grep -q "^CONFIG_ARCH_SM6150=y" "$DEFCONFIG" || sed -i 's/# CONFIG_ARCH_SM6150 is not set/CONFIG_ARCH_SM6150=y/' "$DEFCONFIG"
+grep -q "^CONFIG_ARCH_SDMMAGPIE=y" "$DEFCONFIG" || sed -i 's/# CONFIG_ARCH_SDMMAGPIE is not set/CONFIG_ARCH_SDMMAGPIE=y/' "$DEFCONFIG"
+grep -q "^CONFIG_MACH_XIAOMI_SWEET=y" "$DEFCONFIG" || sed -i 's/# CONFIG_MACH_XIAOMI_SWEET is not set/CONFIG_MACH_XIAOMI_SWEET=y/' "$DEFCONFIG"
+grep -q "^CONFIG_PINCTRL_SM6150=y" "$DEFCONFIG" || sed -i 's/# CONFIG_PINCTRL_SM6150 is not set/CONFIG_PINCTRL_SM6150=y/' "$DEFCONFIG"
+grep -q "^CONFIG_MSM_GCC_SM6150=y" "$DEFCONFIG" || sed -i 's/# CONFIG_MSM_GCC_SM6150 is not set/CONFIG_MSM_GCC_SM6150=y/' "$DEFCONFIG"
+grep -q "^CONFIG_MSM_DISPCC_SM6150=y" "$DEFCONFIG" || sed -i 's/# CONFIG_MSM_DISPCC_SM6150 is not set/CONFIG_MSM_DISPCC_SM6150=y/' "$DEFCONFIG"
+grep -q "^CONFIG_MSM_DISPCC_SDMMAGPIE=y" "$DEFCONFIG" || sed -i 's/# CONFIG_MSM_DISPCC_SDMMAGPIE is not set/CONFIG_MSM_DISPCC_SDMMAGPIE=y/' "$DEFCONFIG"
+grep -q "^CONFIG_QCOM_SM6150_LLCC=y" "$DEFCONFIG" || sed -i 's/# CONFIG_QCOM_SM6150_LLCC is not set/CONFIG_QCOM_SM6150_LLCC=y/' "$DEFCONFIG"
+grep -q "^CONFIG_QTI_PDC_SM6150=y" "$DEFCONFIG" || sed -i 's/# CONFIG_QTI_PDC_SM6150 is not set/CONFIG_QTI_PDC_SM6150=y/' "$DEFCONFIG"
+grep -q "^CONFIG_QCA_CLD_WLAN=y" "$DEFCONFIG" || sed -i 's/# CONFIG_QCA_CLD_WLAN is not set/CONFIG_QCA_CLD_WLAN=y/' "$DEFCONFIG"
+grep -q "^CONFIG_ICNSS=y" "$DEFCONFIG" || sed -i 's/# CONFIG_ICNSS is not set/CONFIG_ICNSS=y/' "$DEFCONFIG"
+grep -q "^CONFIG_ICNSS_QMI=y" "$DEFCONFIG" || sed -i 's/# CONFIG_ICNSS_QMI is not set/CONFIG_ICNSS_QMI=y/' "$DEFCONFIG"
 
 # 1. Enable SYSVIPC & POSIX_MQUEUE (IPC dependencies)
 sed -i 's/# CONFIG_SYSVIPC is not set/CONFIG_SYSVIPC=y\nCONFIG_SYSVIPC_SYSCTL=y/' "$DEFCONFIG"
@@ -38,6 +52,7 @@ sed -i 's/# CONFIG_CRYPTO_ZSTD is not set/CONFIG_CRYPTO_ZSTD=y\nCONFIG_ZSTD_COMP
 # 8. Set ZRAM default compression and recompression to ZSTD (10.74:1 density)
 sed -i 's/CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM="lz4"/CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM="zstd"/' "$DEFCONFIG"
 sed -i 's/CONFIG_ZRAM_DEFAULT_RECOMP_ALGORITHM="lzo"/CONFIG_ZRAM_DEFAULT_RECOMP_ALGORITHM="zstd"/' "$DEFCONFIG"
+grep -q 'CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM="zstd"' "$DEFCONFIG" || sed -i '/CONFIG_ZRAM=y/a CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM="zstd"\nCONFIG_ZRAM_MULTI_COMP=y\nCONFIG_ZRAM_DEFAULT_RECOMP_ALGORITHM="zstd"\nCONFIG_ZRAM_AUTO_RECOMP=y\nCONFIG_ZRAM_AUTO_RECOMP_INTERVAL=30\nCONFIG_ZRAM_AUTO_RECOMP_PAGES=2048' "$DEFCONFIG"
 
 # 9. Enable Forensic Observability (DebugFS, Hung Task Detection, Ftrace Syscalls)
 sed -i 's/# CONFIG_DEBUG_FS is not set/CONFIG_DEBUG_FS=y/' "$DEFCONFIG"
@@ -52,6 +67,18 @@ sed -i 's/# CONFIG_TRANSPARENT_HUGEPAGE is not set/CONFIG_TRANSPARENT_HUGEPAGE=y
 echo "=== Verifying applied configurations..."
 MISSING=0
 for opt in \
+    "CONFIG_ARCH_SM6150=y" \
+    "CONFIG_ARCH_SDMMAGPIE=y" \
+    "CONFIG_MACH_XIAOMI_SWEET=y" \
+    "CONFIG_PINCTRL_SM6150=y" \
+    "CONFIG_MSM_GCC_SM6150=y" \
+    "CONFIG_MSM_DISPCC_SM6150=y" \
+    "CONFIG_MSM_DISPCC_SDMMAGPIE=y" \
+    "CONFIG_QCOM_SM6150_LLCC=y" \
+    "CONFIG_QTI_PDC_SM6150=y" \
+    "CONFIG_QCA_CLD_WLAN=y" \
+    "CONFIG_ICNSS=y" \
+    "CONFIG_ICNSS_QMI=y" \
     "CONFIG_SYSVIPC=y" \
     "CONFIG_SYSVIPC_SYSCTL=y" \
     "CONFIG_POSIX_MQUEUE=y" \
@@ -96,4 +123,4 @@ if [ "$MISSING" -ne 0 ]; then
     exit 1
 fi
 
-echo "=== All 30 kernel optimizations verified successfully in sweet_defconfig!"
+echo "=== All hardware, container and performance options verified successfully in sweet_defconfig!"
